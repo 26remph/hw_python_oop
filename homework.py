@@ -49,7 +49,7 @@ class Training:
     """Базовый класс тренировки.
 
     Содержит аттрибуты:
-    - :attr: 'LEN_STEP' - коэфф. для перевода действий (шагов, гребков) в метры'
+    - :attr: 'LEN_STEP' - коэфф. перевода действий (шагов, гребков) в метры'
     - :attr: 'M_IN_KM' - константа для перевода километров в метры'
     - :attr: 'training_type' - тип тренировки
     - :attr: 'calories' - количество потраченных калорий'
@@ -143,7 +143,8 @@ class SportsWalking(Training):
         height: float = self.height
         duration_minutes: float = self.duration * 60
 
-        return ((FIRST_CALORIE_MULTIPLIER * weight + (mean_speed ** 2 // height)
+        return ((FIRST_CALORIE_MULTIPLIER * weight
+                 + (mean_speed ** 2 // height)
                  * SECOND_CALORIE_MULTIPLIER * weight)
                 * duration_minutes)
 
