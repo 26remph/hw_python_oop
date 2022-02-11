@@ -1,40 +1,28 @@
-"""
-Фитнес трекер. Модуль расчёта и отображения полной информации о тренировках
-по данным от блока датчиков. Работает с такими видами тренировок:
-
-* бег (реализована классом Running)
-* спортивная ходьба (реализована классом SportsWalking)
-* плавание (реализована классом Swimming)
-
-Как это работает?
--------------
-Принимается от блока датчиков информацию о прошедшей тренировке. Определяет вид
-тренировки.
-
-Функция:
-read_package(workout_type: str, data: list) -> Training:
-
-Далее рассчитывается результат. Для этого реализован метод базового класса
-Training.show_training_info(self)
-
-Для вывода сообщение о результатах тренировок предусмотрен отдельный класс
-InfoMessage
-
-Особенности реализации.
-----------------------
-Каждый вид тренировки имеет свой клас, все свойства и методы без изменений
-наследуются от базового класса Training. Метод расчёта калорий, является
-переопределяемым для наследуемых классов.
-"""
+#
+# Notice
+# -------
+#
+# About using PEP257 (Multi-line Docstring) into original say:
+# [---skip---]
+# Insert a blank line after all docstrings (one-line or multi-line)
+# that document a class -- generally speaking, the class's methods
+# are separated from each other by a single blank line, and the docstring
+# needs to be offset from the first method by a blank line.
+# [---end skip]
+#
+# In standard lib as 'pip' and 'flake8' (/lib/flake8) mudules use blank line
+#  after all docstrings
 
 from abc import abstractmethod
+from typing import Optional
 
 
 class InfoMessage:
-    """
-    Информационное сообщение о тренировке.
+    """Информационное сообщение о тренировке.
+
     Выводит: имя класса тренировки, длительность тренировки в часах,
-    дистанция в километрах, средняя скорость, количество килокалорий
+    дистанция в километрах, среднюю скорость в км/ч, количество килокалорий
+    в килокалориях.
     """
 
     def __init__(self,
@@ -43,13 +31,11 @@ class InfoMessage:
                  distance: float,
                  speed: float,
                  calories: float) -> None:
-        self.training_type: str = training_type  # бег, ходьба, плавание
-        self.duration: float = duration  # длительность в часах
-
-        # дистанция, которую преодолел пользователь, в километрах
+        self.training_type: str = training_type
+        self.duration: float = duration
         self.distance: float = distance
-        self.speed: float = speed  # средняя скорость в км/ч
-        self.calories: float = calories  # расход энергии, в килокалориях.
+        self.speed: float = speed
+        self.calories: float = calories
 
     def get_message(self):
         return (f'Тип тренировки: {self.training_type}; '
@@ -61,16 +47,16 @@ class InfoMessage:
 
 class Training:
     """Базовый класс тренировки.
-    Принимает три основных параметра тренировки:
-    * action, количество совершённых действий
-    * duration, длительность тренировки
-    * weight, вес спортсмена.
+
+    Содержит аттрибуты:
+    - :attr: 'LEN_STEP' - коэфф. для перевода действий (шагов, гребков) в метры'
+    - :attr: 'M_IN_KM' - константа для перевода километров в метры'
+    - :attr: 'training_type' - тип тренировки
+    - :attr: 'calories' - количество потраченных калорий'
     """
 
-    # При типе тренировки "спортивной ходьба", данный показатель
-    # имеет значение 0.65м, а во время плавания значение равное 1.38м
     LEN_STEP: float = 0.65
-    M_IN_KM: int = 1000  # метров в километре
+    M_IN_KM: int = 1000
 
     def __init__(self,
                  action: int,
@@ -95,11 +81,10 @@ class Training:
     @abstractmethod
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        pass
+        raise NotImplementedError
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
-
         value_dict = {'training_type': self.training_type,
                       'duration': self.duration,
                       'distance': self.get_distance(),
@@ -114,28 +99,27 @@ class Running(Training):
 
     def get_spent_calories(self):
         """ Расчет калорий = (18 * средняя_скорость - 20) * вес_спортсмена /
-        M_IN_KM * время_тренировки_в_минутах
-        """
+        M_IN_KM * время_тренировки_в_минутах"""
+        CALORIES_MEAN_SPEED_MULTIPLIER: float = 18
+        CALORIES_MEAN_SPEED_SHIFT: float = 20
 
-        # коэффициенты для расчета калорий
-        coeff_calorie_1: float = 18
-        coeff_calorie_2: float = 20
+        mean_speed = self.get_mean_speed()
+        weight = self.weight
+        duration_minutes = self.duration * 60
 
-        mean_speed = self.get_mean_speed()  # средняя скорость
-        weight = self.weight  # вес_спортсмена
-        duration_minutes = self.duration * 60  # время_тренировки_в_минутах
-
-        return ((coeff_calorie_1 * mean_speed - coeff_calorie_2)
+        return ((CALORIES_MEAN_SPEED_MULTIPLIER * mean_speed
+                 - CALORIES_MEAN_SPEED_SHIFT)
                 * weight
                 / self.M_IN_KM
                 * duration_minutes)
 
 
 class SportsWalking(Training):
-    """Тренировка: спортивная ходьба. Принимает дополнительно:
-    * height, рост человека"""
+    """Тренировка: спортивная ходьба.
+    Содержит дополнительный аттрибут:
+    - :attr: 'height' - рост человека
+    """
 
-    # При типе тренировки "спортивной ходьба", длина шага равна 0.65м
     LEN_STEP = 0.65
 
     def __init__(self,
@@ -148,31 +132,32 @@ class SportsWalking(Training):
         self.height = height
 
     def get_spent_calories(self) -> float:
+        """ Расчет калорий =
+        (0.035 * вес + (средняя_скорость**2 // рост) * 0.029 * вес)
+        * время_тренировки_в_минутах
         """
-        Расчет калорий = (0.035 * вес + (средняя_скорость**2 // рост) * 0.029
-        * вес) * время_тренировки_в_минутах
-        """
-        coeff_calorie_1: float = 0.035  # Коэффициент калорий
-        coeff_calorie_2: float = 0.029  # Коэффициент калорий
-        weight: float = self.weight  # вес
-        mean_speed: float = self.get_mean_speed()  # квадрат средней скорости
-        height: float = self.height  # рост
-        # время_тренировки_в_минутах
+        FIRST_CALORIE_MULTIPLIER: float = 0.035
+        SECOND_CALORIE_MULTIPLIER: float = 0.029
+        weight: float = self.weight
+        mean_speed: float = self.get_mean_speed()
+        height: float = self.height
         duration_minutes: float = self.duration * 60
 
-        return ((coeff_calorie_1 * weight + (mean_speed ** 2 // height)
-                 * coeff_calorie_2 * weight)
+        return ((FIRST_CALORIE_MULTIPLIER * weight + (mean_speed ** 2 // height)
+                 * SECOND_CALORIE_MULTIPLIER * weight)
                 * duration_minutes)
 
 
 class Swimming(Training):
-    """Тренировка: плавание. Принимает дополнительно:
-    * length_pool, длинна бассейна
-    * count_pool, сколько раз пользователь переплыл бассейн
-    для расчета средней скорости использует переопределенный алгоритм.
+    """Тренировка: плавание.
+
+    Содержит дополнительный аттрибут:
+    - :attr: 'length_pool' - длинна бассейна
+    - :attr: 'count_pool' - сколько раз пользователь переплыл бассейн
+
+    Для расчета средней скорости использует переопределенный алгоритм.
     """
 
-    # При типе тренировки "плавание", длина гребка равна 1.38м
     LEN_STEP = 1.38
 
     def __init__(self,
@@ -183,35 +168,29 @@ class Swimming(Training):
                  count_pool: int) -> None:
         super().__init__(action, duration, weight)
 
-        self.LEN_STEP = 1.38
-
         self.length_pool: int = length_pool
         self.count_pool: int = count_pool
 
     def get_spent_calories(self) -> float:
-        """
-        Расчет калорий = (средняя_скорость + 1.1) * 2 * вес
-        """
-        coeff_calorie_1 = 1.1
-        return (self.get_mean_speed() + coeff_calorie_1) * 2 * self.weight
+        """Расчет калорий = (средняя_скорость + 1.1) * 2 * вес"""
+        CALORIE_MULTIPLIER = 1.1
+        return (self.get_mean_speed() + CALORIE_MULTIPLIER) * 2 * self.weight
 
     def get_mean_speed(self) -> float:
-        """
-        Ср. скорость = длина_бассейна * count_pool / M_IN_KM / время_тренировки
-        """
+        """Ср. скорость =
+        длина_бассейна * count_pool / M_IN_KM / время_тренировки"""
         return (self.length_pool
                 * self.count_pool
                 / self.M_IN_KM
                 / self.duration)
 
 
-def read_package(workout_type: str, data: list) -> Training:
+def read_package(workout_type: str, data: list) -> Optional[Training]:
     """
     Прочитать данные полученные от датчиков.
+
     Гарантируется что пакет данных отфильтрован и строго содержит данные
-    определенной длинны, типов и значений. Также, что в пакете будет получен
-    код класса, определенный в справочнике class_links:
-    Структура пакета:
+    определенной длинны, типов и значений.
 
     """
     class_links = {
@@ -223,21 +202,24 @@ def read_package(workout_type: str, data: list) -> Training:
     try:
         obj: Training = class_links[workout_type](*data)
     except KeyError:
-        raise
+        print(f"Error. Processing of receive code '{workout_type}' "
+              f"not implemented in module.")
+        return None
     else:
         return obj
 
 
-def main(training: Training) -> None:
+def main(training: Optional[Training]) -> None:
     """Главная функция."""
-    info = training.show_training_info()
-    print(info.get_message())
+    if training is not None:
+        info = training.show_training_info()
+        print(info.get_message())
 
 
 if __name__ == '__main__':
     packages = [
         ('SWM', [720, 1, 80, 25, 40]),
-        ('RUN', [15000, 1, 75]),
+        ('XXX', [15000, 1, 75]),
         ('WLK', [9000, 1, 75, 180]),
     ]
 
